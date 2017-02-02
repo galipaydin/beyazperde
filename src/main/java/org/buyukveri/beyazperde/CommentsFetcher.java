@@ -141,7 +141,7 @@ public class CommentsFetcher {
                 }
             }
             if (check) {
-                System.out.println("BP yorum : " + filmNo);
+                //System.out.println("BP yorum : " + filmNo);
                 Document doc = WebPageDownloader.getPage(url);
 
                 Elements stars = doc.getElementsByAttributeValueContaining("itemprop", "ratingValue");
@@ -177,7 +177,7 @@ public class CommentsFetcher {
                 if (filmNumber.equals(filmNo)) {
                     if (total.equals(commentCount)) {
                         check = false;
-                        System.out.println(filmNo + ", yeni yorum yok, " + commentCount);
+                        //System.out.println(filmNo + ", yeni yorum yok, " + commentCount);
                         break;
                     }
                 }
@@ -202,7 +202,7 @@ public class CommentsFetcher {
                         purl = url;
                     }
 
-                    System.out.println("\tKullanıcı Yorum - " + filmNo + ", sayfa: " + i);
+                    //System.out.println("\tKullanıcı Yorum - " + filmNo + ", sayfa: " + i);
 
                     Elements elements = doc.getElementsByAttributeValueContaining("class", "row item hred");
                     for (Element e : elements) {
