@@ -1,8 +1,12 @@
 package org.buyukveri.beyazperde;
 
+import java.io.BufferedOutputStream;
 import java.io.File;
+import java.io.FileOutputStream;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
 import java.util.Properties;
 import java.util.Scanner;
 import org.buyukveri.common.PropertyLoader;
@@ -17,16 +21,31 @@ import org.jsoup.select.Elements;
  */
 public class CommentsFetcher {
 
-    private FileWriter bpCommentsFW, userCommentsFW, dbFW, bpCommentsLatinFW, userCommentsLatinFW;
+    private FileWriter bpCommentsFW, userCommentsFW, bpCommentsLatinFW, userCommentsLatinFW, castFW, movieNamesFW;
     private Properties p;
-    private String userCommentsFilePath, bpCommentsFilePath;
+    private String userCommentsFilePath, bpCommentsFilePath, castFilePath, movieNamesFilePath;
     private String userCommentsLatinFilePath, bpCommentsLatinFilePath;
+    private String imgFolderPath;
 
     public CommentsFetcher() {
         p = PropertyLoader.loadProperties("bp");
         String folderPath = p.getProperty("folderPath");
+        File f = new File(folderPath);
+        if (!f.exists()) {
+            f.mkdirs();
+        }
+
+        imgFolderPath = folderPath + "/img/";
+
+        f = new File(imgFolderPath);
+        if (!f.exists()) {
+            f.mkdirs();
+        }
+
         bpCommentsFilePath = folderPath + "/bpcomments_tr.txt";
         userCommentsFilePath = folderPath + "/usercomments_tr.txt";
+        castFilePath = folderPath + "/cast.txt";
+        movieNamesFilePath = folderPath + "/movienames.txt";
 
         bpCommentsLatinFilePath = folderPath + "/bpcomments.txt";
         userCommentsLatinFilePath = folderPath + "/usercomments.txt";
@@ -34,6 +53,8 @@ public class CommentsFetcher {
         try {
             bpCommentsFW = new FileWriter(bpCommentsFilePath, true);
             userCommentsFW = new FileWriter(userCommentsFilePath, true);
+            castFW = new FileWriter(castFilePath, true);
+            movieNamesFW = new FileWriter(movieNamesFilePath, true);
 
             bpCommentsLatinFW = new FileWriter(bpCommentsLatinFilePath, true);
             userCommentsLatinFW = new FileWriter(userCommentsLatinFilePath, true);
@@ -74,13 +95,18 @@ public class CommentsFetcher {
         try {
             Document filmList = WebPageDownloader.getPage(url);
             Elements hrefEls = filmList.getElementsByAttributeValueContaining("href", "/filmler/film-");
+
             for (Element e : hrefEls) {
                 String filmAddress = e.attr("href");
                 if (!filmAddress.endsWith("elestiriler-beyazperde/")) {
+
                     String userCommentsURL = "http://www.beyazperde.com" + filmAddress + "kullanici-elestirileri/";
                     String bpCommentsURL = "http://www.beyazperde.com" + filmAddress + "elestiriler-beyazperde/";
                     String filmNo = filmAddress.substring(filmAddress.indexOf("-") + 1);
                     filmNo = filmNo.replaceAll("/", "");
+
+                    getTitleAndCast("http://www.beyazperde.com" + filmAddress + "oyuncular/", filmNo);
+
                     extractBeyazPerdeComments(bpCommentsURL, filmNo);
                     parseMoviePage(userCommentsURL, filmNo);
                 }
@@ -91,16 +117,103 @@ public class CommentsFetcher {
         }
     }
 
+    public void getTitleAndCast(String url, String filmNo) {
+        try {
+            Document doc = WebPageDownloader.getPage(url);
+            //Film adı
+            Element e = doc.getElementsByAttributeValueContaining("class", "titlebar-link").first();
+            String filmAdi = e.text();
+            System.out.println(filmAdi);
+            this.movieNamesFW.write(filmAdi + "\n");
+            this.movieNamesFW.flush();
+
+            //Yönetmen ve Oyuncuları Çıkar
+            Elements names = doc.getElementsByAttributeValueContaining("itemprop", "name");
+            for (Element name : names) {
+                String n = name.text();
+                this.castFW.write(n + "\n");
+                this.castFW.flush();
+            }
+
+            Elements people = doc.getElementsByAttributeValueContaining("class", "card-person");
+            for (Element person : people) {
+                Elements hrefs = person.getElementsByAttribute("href");
+                for (Element href : hrefs) {
+                    String urlPart = href.attr("href").toString();  ///sanatcilar/sanatci-139654/
+                    String personUrl = "http://www.beyazperde.com" + urlPart;
+                    getPersonData(personUrl);
+                }
+            }
+
+        } catch (Exception e) {
+        }
+    }
+
+    public void getPersonData(String url) {
+        try {
+
+            String photoUrl = url + "/fotolar/";
+            Document doc = WebPageDownloader.getPage(photoUrl);
+            Element title = doc.getElementsByAttributeValue("id", "title").first();
+
+            Element hr = title.getElementsByTag("span").first();
+            String name = hr.text().trim().replaceAll(" ", "").toLowerCase();
+            name = cleanTurkishChars(name);
+
+            if (name != null && !name.equals("")) {
+                String folder = this.imgFolderPath + "/" + name;
+                File f = new File(folder);
+                if (!f.exists()) {
+                    f.mkdirs();
+                }
+                
+                        int count = 0;
+                Element el = doc.getElementsByAttributeValueContaining("class", "list_photo").first();
+//                for (Element el : els) {
+                    Elements hrefs = el.getElementsByAttribute("href");
+                    for (Element href : hrefs) {
+                        String urlPart = href.attr("href").toString();  ///sanatcilar/sanatci-139654/
+                        String imgUrl = "http://www.beyazperde.com" + urlPart;
+
+                        Document doc1 = WebPageDownloader.getPage(imgUrl);
+                        Elements ell = doc1.getElementsByAttributeValueContaining("class", "carousel_inner");
+                        for (Element el1 : ell) {
+                            Element img = el1.getElementsByAttribute("src").first();
+//                                System.out.println(name + " " + count);
+                                String imgLink = img.attr("src").toString();
+                                saveImage(imgLink, folder + "/" + name + "_" + count++ + ".jpg" );
+                        }
+//                    }
+                }
+            }
+        } catch (Exception e) {
+        }
+    }
+
+    public void saveImage(String url, String filePath) {
+        try {
+            try (InputStream in = new java.net.URL(url).openStream();
+                    OutputStream out = new BufferedOutputStream(new FileOutputStream(filePath))) {
+                for (int b; (b = in.read()) != -1;) {
+                    out.write(b);
+                }
+            }
+        } catch (Exception e) {
+            System.out.println(e.getMessage());
+        }
+    }
+
     public void parseMoviePage(String url, String filmNo) {
         try {
             Document doc = WebPageDownloader.getPage(url);
             //Internet bağlantısı yoksa locale kaydedilmiş dosyadan çalışmak için
             //Document doc = WebPageDownloader.getFile(url);
+            Elements els = doc.getElementsByAttributeValueContaining("class", "pagination-item-holder");
 
 //            String title = doc.title();
-//            System.out.println("\t" + filmNo);
+            System.out.println("\t" + filmNo);
             int lastPage = 0;
-            Elements els = doc.getElementsByAttributeValueContaining("class", "pagination-item-holder");
+            
             if (els.size() > 0) {
                 Element e = els.first();
                 String text = e.toString();
@@ -136,12 +249,12 @@ public class CommentsFetcher {
                 String filmNumber = arr[0];
                 if (filmNumber.equals(filmNo)) {
                     check = false;
-                    //System.out.println("BP yorumu zaten kaydedilmiş " + filmNo);
+                    System.out.println("BP yorumu zaten kaydedilmiş " + filmNo);
                     break;
                 }
             }
             if (check) {
-                //System.out.println("BP yorum : " + filmNo);
+                System.out.println("BP yorum : " + filmNo);
                 Document doc = WebPageDownloader.getPage(url);
 
                 Elements stars = doc.getElementsByAttributeValueContaining("itemprop", "ratingValue");
@@ -170,6 +283,9 @@ public class CommentsFetcher {
             Scanner s = new Scanner(new File(userCommentsFilePath));
             boolean check = true;
             while (s.hasNext()) {
+                if (check == false) {
+                    break;
+                }
                 String line = s.nextLine();
                 String[] arr = line.split(";");
                 String filmNumber = arr[0];
@@ -177,8 +293,7 @@ public class CommentsFetcher {
                 if (filmNumber.equals(filmNo)) {
                     if (total.equals(commentCount)) {
                         check = false;
-                        //System.out.println(filmNo + ", yeni yorum yok, " + commentCount);
-                        break;
+                        System.out.println(filmNo + ", yeni yorum yok, " + commentCount);
                     }
                 }
             }
@@ -202,8 +317,7 @@ public class CommentsFetcher {
                         purl = url;
                     }
 
-                    //System.out.println("\tKullanıcı Yorum - " + filmNo + ", sayfa: " + i);
-
+                    System.out.println("\tKullanıcı Yorum - " + filmNo + ", sayfa: " + i);
                     Elements elements = doc.getElementsByAttributeValueContaining("class", "row item hred");
                     for (Element e : elements) {
                         Elements social = e.getElementsByAttribute("data-totalreviews");
@@ -238,8 +352,6 @@ public class CommentsFetcher {
                 .replaceAll("ü", "u").replaceAll("ş", "s").replaceAll("â", "a");
         return in;
     }
-    
-
 
     public static void main(String[] args) {
         System.setProperty("http.agent", "Mozilla/5.0");
