@@ -119,6 +119,7 @@ public class CommentsFetcher {
 
     public void getTitleAndCast(String url, String filmNo) {
         try {
+            System.out.println("url = " + url);
             Document doc = WebPageDownloader.getPage(url);
             //Film adı
             Element e = doc.getElementsByAttributeValueContaining("class", "titlebar-link").first();
@@ -135,71 +136,17 @@ public class CommentsFetcher {
                 this.castFW.flush();
             }
 
-            Elements people = doc.getElementsByAttributeValueContaining("class", "card-person");
-            for (Element person : people) {
-                Elements hrefs = person.getElementsByAttribute("href");
-                for (Element href : hrefs) {
-                    String urlPart = href.attr("href").toString();  ///sanatcilar/sanatci-139654/
-                    String personUrl = "http://www.beyazperde.com" + urlPart;
-                    getPersonData(personUrl);
-                }
-            }
+//            Elements people = doc.getElementsByAttributeValueContaining("class", "card-person");
+//            for (Element person : people) {
+//                Elements hrefs = person.getElementsByAttribute("href");
+//                for (Element href : hrefs) {
+//                    String urlPart = href.attr("href").toString();  ///sanatcilar/sanatci-139654/
+//                    String personUrl = "http://www.beyazperde.com" + urlPart;
+//                    getPersonData(personUrl);
+//                }
+//            }
 
         } catch (Exception e) {
-        }
-    }
-
-    public void getPersonData(String url) {
-        try {
-
-            String photoUrl = url + "/fotolar/";
-            Document doc = WebPageDownloader.getPage(photoUrl);
-            Element title = doc.getElementsByAttributeValue("id", "title").first();
-
-            Element hr = title.getElementsByTag("span").first();
-            String name = hr.text().trim().replaceAll(" ", "").toLowerCase();
-            name = cleanTurkishChars(name);
-
-            if (name != null && !name.equals("")) {
-                String folder = this.imgFolderPath + "/" + name;
-                File f = new File(folder);
-                if (!f.exists()) {
-                    f.mkdirs();
-                }
-                
-                        int count = 0;
-                Element el = doc.getElementsByAttributeValueContaining("class", "list_photo").first();
-//                for (Element el : els) {
-                    Elements hrefs = el.getElementsByAttribute("href");
-                    for (Element href : hrefs) {
-                        String urlPart = href.attr("href").toString();  ///sanatcilar/sanatci-139654/
-                        String imgUrl = "http://www.beyazperde.com" + urlPart;
-
-                        Document doc1 = WebPageDownloader.getPage(imgUrl);
-                        Elements ell = doc1.getElementsByAttributeValueContaining("class", "carousel_inner");
-                        for (Element el1 : ell) {
-                            Element img = el1.getElementsByAttribute("src").first();
-//                                System.out.println(name + " " + count);
-                                String imgLink = img.attr("src").toString();
-                                saveImage(imgLink, folder + "/" + name + "_" + count++ + ".jpg" );
-                        }
-//                    }
-                }
-            }
-        } catch (Exception e) {
-        }
-    }
-
-    public void saveImage(String url, String filePath) {
-        try {
-            try (InputStream in = new java.net.URL(url).openStream();
-                    OutputStream out = new BufferedOutputStream(new FileOutputStream(filePath))) {
-                for (int b; (b = in.read()) != -1;) {
-                    out.write(b);
-                }
-            }
-        } catch (Exception e) {
-            System.out.println(e.getMessage());
         }
     }
 
@@ -277,6 +224,7 @@ public class CommentsFetcher {
 
     public void extractUserComments(String url, String filmNo) {
         try {
+            System.out.println("*****  = " + url  );
             Document doc = WebPageDownloader.getPage(url);
             Elements ele = doc.getElementsByAttribute("data-totalreviews");
             String total = ele.attr("data-totalreviews");
@@ -346,7 +294,7 @@ public class CommentsFetcher {
         }
     }
 
-    public String cleanTurkishChars(String in) {
+    public static String cleanTurkishChars(String in) {
         in = in.toLowerCase();
         in = in.replaceAll(";", ",").replaceAll("ç", "c").replaceAll("ğ", "g").replaceAll("ı", "i").replaceAll("ö", "o")
                 .replaceAll("ü", "u").replaceAll("ş", "s").replaceAll("â", "a");
