@@ -69,6 +69,7 @@ public class PhotoFileProcessor {
                 pfp.downloadPics(path);
             }
         }
+//        pfp.readErrorFile("/Users/galip/dev/data/beyazperde/error.txt");
 //        pfp.readErrorFile("/home/bulut/galip/beyazperde/error.txt");
 //        pfp.downloadPics("/Users/galip/dev/data/beyazperde/names.txt");
     }
