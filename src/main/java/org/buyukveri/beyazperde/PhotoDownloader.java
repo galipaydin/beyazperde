@@ -15,6 +15,7 @@ import java.io.OutputStream;
 import java.util.Properties;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import org.buyukveri.common.CommonTools;
 import org.buyukveri.common.PropertyLoader;
 import org.buyukveri.common.WebPageDownloader;
 import org.jsoup.nodes.Document;
@@ -29,7 +30,7 @@ public class PhotoDownloader {
 
     private Properties p;
     private String imgFolderPath;
-    FileWriter fw;
+    FileWriter fw, errorfw;
 
     public PhotoDownloader() {
         try {
@@ -46,9 +47,10 @@ public class PhotoDownloader {
             if (!f.exists()) {
                 f.mkdirs();
             }
-            fw = new FileWriter(this.imgFolderPath + "/names.txt");
+            fw = new FileWriter(this.imgFolderPath + "/links_"+ CommonTools.getTime() +".txt");
+            errorfw = new FileWriter(this.imgFolderPath + "/error_"+ CommonTools.getTime() +".txt");
         } catch (IOException ex) {
-
+            System.out.println("ex = " + ex.getMessage());
         }
 
     }
@@ -82,7 +84,7 @@ public class PhotoDownloader {
                 parseLetterPage(link);
             }
 
-        } catch (NumberFormatException ex) {
+        } catch (Exception ex) {
             System.out.println("parseLetterIndexPage: " + ex.getMessage() + " " + url);
         }
 
@@ -94,22 +96,28 @@ public class PhotoDownloader {
             Document doc = WebPageDownloader.getPage(url);
             Elements datablock = doc.getElementsByAttributeValueContaining("class", "datablock");
             for (Element e : datablock) {
+            Thread.sleep(1000);
 
                 Element test = e.getElementsByAttributeValueContaining("href", "/fotolar/").first();
                 if (test != null) {
+                    //System.out.println(test);
                     String href = test.attr("href");
                     parsePhotoIndexPage("http://www.beyazperde.com" + href);
                 }
             }
 
         } catch (Exception ex) {
-            System.out.println("parseIndexPages: " + url);
+            try {
+                System.out.println("parseLetterPage: " + url);
+                errorfw.write(url + "\n");
+                errorfw.flush();
+            } catch (IOException ex1) {
+            }
         }
     }
 
     public void parsePhotoIndexPage(String url) {
         try {
-//            Thread.sleep(500);
             Document doc = WebPageDownloader.getPage(url);
             Element title = doc.getElementsByAttributeValue("id", "title").first();
 
@@ -118,7 +126,7 @@ public class PhotoDownloader {
             name = CommentsFetcher.cleanTurkishChars(name);
 //            fw.write(name + "\n");
 //            fw.flush();
-//            System.out.println(name);
+            System.out.println(name);
 
 //            if (name != null && !name.equals("")) {
 //                String folder = this.imgFolderPath + name;
@@ -152,8 +160,13 @@ public class PhotoDownloader {
             }
 
         } catch (Exception e) {
-            System.out.println("parsePhotoIndexPage " + url);
-            parsePhotoIndexPage(url);
+            try {
+                System.out.println("parsePhotoIndexPage " + url);
+                errorfw.write(url + "\n");
+                errorfw.flush();
+                // parsePhotoIndexPage(url);
+            } catch (IOException ex) {
+            }
         }
     }
 
