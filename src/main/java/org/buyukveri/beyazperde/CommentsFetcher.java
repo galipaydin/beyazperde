@@ -1,14 +1,11 @@
 package org.buyukveri.beyazperde;
 
-import java.io.BufferedOutputStream;
 import java.io.File;
-import java.io.FileOutputStream;
 import java.io.FileWriter;
 import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
 import java.util.Properties;
 import java.util.Scanner;
+import static org.buyukveri.common.CommonTools.cleanTurkishChars;
 import org.buyukveri.common.PropertyLoader;
 import org.buyukveri.common.WebPageDownloader;
 import org.jsoup.nodes.Document;
@@ -29,7 +26,7 @@ public class CommentsFetcher {
 
     public CommentsFetcher() {
         p = PropertyLoader.loadProperties("bp");
-        String folderPath = p.getProperty("folderPath");
+        String folderPath = p.getProperty("folderPath")+"/beyazperde/";
         File f = new File(folderPath);
         if (!f.exists()) {
             f.mkdirs();
@@ -145,7 +142,6 @@ public class CommentsFetcher {
 //                    getPersonData(personUrl);
 //                }
 //            }
-
         } catch (Exception e) {
         }
     }
@@ -160,7 +156,7 @@ public class CommentsFetcher {
 //            String title = doc.title();
             System.out.println("\t" + filmNo);
             int lastPage = 0;
-            
+
             if (els.size() > 0) {
                 Element e = els.first();
                 String text = e.toString();
@@ -224,7 +220,7 @@ public class CommentsFetcher {
 
     public void extractUserComments(String url, String filmNo) {
         try {
-            System.out.println("*****  = " + url  );
+            System.out.println("*****  = " + url);
             Document doc = WebPageDownloader.getPage(url);
             Elements ele = doc.getElementsByAttribute("data-totalreviews");
             String total = ele.attr("data-totalreviews");
@@ -281,7 +277,10 @@ public class CommentsFetcher {
                         this.userCommentsFW.flush();
 
                         yorum = cleanTurkishChars(yorum);
-
+                        
+                        ln = filmNo + ";" + totalNoOfComments + ";" + commentId + ";"
+                                + stars.first().text() + ";" + yorum;
+                        
                         this.userCommentsLatinFW.write(ln + "\n");
                         this.userCommentsLatinFW.flush();
                     }
@@ -294,12 +293,6 @@ public class CommentsFetcher {
         }
     }
 
-    public static String cleanTurkishChars(String in) {
-        in = in.toLowerCase();
-        in = in.replaceAll(";", ",").replaceAll("ç", "c").replaceAll("ğ", "g").replaceAll("ı", "i").replaceAll("ö", "o")
-                .replaceAll("ü", "u").replaceAll("ş", "s").replaceAll("â", "a");
-        return in;
-    }
 
     public static void main(String[] args) {
         System.setProperty("http.agent", "Mozilla/5.0");

@@ -23,6 +23,14 @@ public class CommonTools {
             return null;
         }
     }
+    
+        public static String cleanTurkishChars(String in) {
+        in = in.toLowerCase();
+        in = in.replaceAll(";", ",").replaceAll("ç", "c").replaceAll("ğ", "g").replaceAll("ı", "i").replaceAll("ö", "o")
+                .replaceAll("ü", "u").replaceAll("ş", "s").replaceAll("â", "a");
+        return in;
+    }
+
     public static void main(String[] args) {
         CommonTools.getTime();
     }

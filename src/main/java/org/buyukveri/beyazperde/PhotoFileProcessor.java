@@ -27,6 +27,7 @@ public class PhotoFileProcessor {
             while (s.hasNext()) {
                 System.out.println("Line: " + ++count);
                 String line = s.nextLine();
+                System.out.println("line = " + line);
                 if (line.endsWith("/fotolar/")) {
                     pd.parsePhotoIndexPage(line);
                 } else {

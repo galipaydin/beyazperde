@@ -13,9 +13,8 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.util.Properties;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 import org.buyukveri.common.CommonTools;
+import static org.buyukveri.common.CommonTools.cleanTurkishChars;
 import org.buyukveri.common.PropertyLoader;
 import org.buyukveri.common.WebPageDownloader;
 import org.jsoup.nodes.Document;
@@ -35,7 +34,7 @@ public class PhotoDownloader {
     public PhotoDownloader() {
         try {
             p = PropertyLoader.loadProperties("bp");
-            String folderPath = p.getProperty("folderPath");
+            String folderPath = p.getProperty("folderPath")+"/beyazperde/";
             File f = new File(folderPath);
             if (!f.exists()) {
                 f.mkdirs();
@@ -123,7 +122,7 @@ public class PhotoDownloader {
 
             Element hr = title.getElementsByTag("span").first();
             String name = hr.text().trim().replaceAll(" ", "_").toLowerCase();
-            name = CommentsFetcher.cleanTurkishChars(name);
+            name = cleanTurkishChars(name);
 //            fw.write(name + "\n");
 //            fw.flush();
             System.out.println(name);
