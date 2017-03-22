@@ -22,14 +22,15 @@ import org.jsoup.select.Elements;
  */
 public class Cast {
 
-    private FileWriter castFW, movieNamesFW;
+    private FileWriter castFW, movieNamesFW, errorFW, imgLinksFW;
     private Properties p;
-    private String castFilePath, movieNamesFilePath;
+    private String castFilePath, movieNamesFilePath, errorFilePath, imgLinksFilePath;
     private String imgFolderPath;
 
     public Cast() {
         p = PropertyLoader.loadProperties("bp");
-        String folderPath = p.getProperty("folderPath") + "/sinemalar/";
+        String folderPath = p.getProperty("folderPath").trim() + "/sinemalar/";
+        System.out.println("folderPath = " + folderPath);
         File f = new File(folderPath);
         if (!f.exists()) {
             f.mkdirs();
@@ -42,13 +43,15 @@ public class Cast {
             f.mkdirs();
         }
 
-        castFilePath = folderPath + "/imglinks.txt";
+        imgLinksFilePath = folderPath + "/imglinks.txt";
+        castFilePath = folderPath + "/cast.txt";
         movieNamesFilePath = folderPath + "/movienames.txt";
-
+        errorFilePath = folderPath + "/error_" + CommonTools.getTime() + ".txt";
         try {
             castFW = new FileWriter(castFilePath);
             movieNamesFW = new FileWriter(movieNamesFilePath);
-
+            errorFW = new FileWriter(errorFilePath);
+            imgLinksFW = new FileWriter(imgLinksFilePath);
         } catch (IOException ex) {
             System.out.println(ex.getMessage());
         }
@@ -56,7 +59,7 @@ public class Cast {
 
     public void getCastLinks() {
         try {
-            for (int i = 0; i < 93; i++) {
+            for (int i = 0; i < 94; i++) {
                 System.out.println("PAGE: " + i);
                 String url = "http://www.sinemalar.com/en-iyi-filmler/" + i;
                 Document doc = WebPageDownloader.getPage(url);
@@ -66,11 +69,16 @@ public class Cast {
                     movieNamesFW.write(filmName + "\n");
                     movieNamesFW.flush();
 
-                    Elements as = el.getElementsByAttributeValue("class", "viyon-filter");
+                    Element div = el.getElementsByAttributeValue("class", "viyon-filter").first();
+                    Elements as = div.getElementsByTag("a");
                     for (Element a : as) {
-                        String link = a.getElementsByAttribute("href").attr("href").toString();
-                        String name = a.getElementsByAttribute("href").attr("title").toString();
+                        String link = a.getElementsByAttribute("href").attr("href");
+                        String name = a.getElementsByAttribute("href").attr("title");
                         System.out.println(name);
+
+                        castFW.write(name + "\n");
+                        castFW.flush();
+
                         name = name.trim().replaceAll(" ", "_").toLowerCase();
                         name = CommonTools.cleanTurkishChars(name);
                         getPersonPhotoLinks("http:" + link, name);
@@ -87,20 +95,30 @@ public class Cast {
         try {
             String link = url.replace("sanatci", "galeri");
             Document doc = WebPageDownloader.getPage(link);
-            Elements el
-                    = doc.getElementById("personGalleryImages").getElementsByTag("a");
-            for (Element e : el) {
-                String imagePageLink = e.attr("href");
-                Document doc1 = WebPageDownloader.getPage(imagePageLink);
-                Element imgDiv = doc1.getElementsByAttributeValue("class", "gallery-slide").first();
-                String imgLink = imgDiv.getElementsByTag("img").attr("src");
-                
-                castFW.write(name +";" + imgLink + "\n");
-                castFW.flush();
+            Element elm
+                    = doc.getElementById("personGalleryImages");
 
+            if (elm != null) {
+                Elements el = elm.getElementsByTag("a");
+
+                for (Element e : el) {
+                    String imagePageLink = e.attr("href");
+                    Document doc1 = WebPageDownloader.getPage(imagePageLink);
+
+                    Elements imgDivs = doc1.getElementsByAttributeValue("class", "gallery-slide");
+                    Element imgDiv = imgDivs.first();
+                    String imgLink = imgDiv.getElementsByTag("img").attr("src");
+                    imgLinksFW.write(name + ";" + imgLink + "\n");
+                    imgLinksFW.flush();
+                }
             }
         } catch (Exception e) {
-            System.out.println("getPersonPhotoLinks:" + e.getMessage());
+            System.out.println("getPersonPhotoLinks:" + url);
+            try {
+                errorFW.write(url + "\n");
+                errorFW.flush();
+            } catch (IOException ex) {
+            }
         }
     }
 
