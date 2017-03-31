@@ -7,8 +7,9 @@ package org.buyukveri.common;
 
 import java.io.BufferedOutputStream;
 import java.io.File;
-import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
+import java.io.FileWriter;
+import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.util.Scanner;
@@ -19,12 +20,16 @@ import java.util.Scanner;
  */
 public class CastPhotoDownloader {
 
+    private FileWriter fw;
+
     public void castPhotoDownload(String folderPath, String linkFilePath) {
         try {
             File f = new File(folderPath);
             if (!f.exists()) {
                 f.mkdirs();
             }
+            fw = new FileWriter(folderPath + "/error.txt");
+
             Scanner s = new Scanner(new File(linkFilePath));
             int count = 0;
             while (s.hasNext()) {
@@ -32,7 +37,7 @@ public class CastPhotoDownloader {
                 if (line.contains(";")) {
                     String name = line.substring(0, line.indexOf(";"));
                     String url = line.substring(line.indexOf(";") + 1);
-
+                    System.out.println(name);
                     String folder = folderPath + "/" + name;
                     File ff = new File(folder);
                     if (!ff.exists()) {
@@ -45,7 +50,7 @@ public class CastPhotoDownloader {
                     }
                 }
             }
-        } catch (FileNotFoundException e) {
+        } catch (Exception e) {
             System.out.println(e.getMessage());
         }
     }
@@ -60,14 +65,35 @@ public class CastPhotoDownloader {
                 }
             }
         } catch (Exception e) {
-            System.out.println("saveImage " + e.getMessage());
+            try {
+                System.out.println("saveImage " + e.getMessage());
+                fw.write(url + "\n");
+                fw.flush();
+            } catch (IOException ex) {
+            }
         }
     }
 
     public static void main(String[] args) {
         CastPhotoDownloader c = new CastPhotoDownloader();
-        c.castPhotoDownload("/Users/galip/dev/data/beyazperde/sinemalar/img", "/Users/galip/dev/data/beyazperde/sinemalar/imglinks.txt");
-    
+        c.castPhotoDownload("/Users/galip/dev/data/beyazperde/img", "/Users/galip/dev/data/beyazperde/error_28032017_043924.txt");
+        /*
+        if (args.length == 0) {
+            c.castPhotoDownload("/Users/galip/dev/data/beyazperde/sinemalar/img", "/Users/galip/dev/data/beyazperde/sinemalar/imglinks.txt");
+        } else if (args.length == 2) {
+            String inputFolder = args[0];
+            String outputFolder = args[0];
+            File f = new File(inputFolder);
+            if(f.isDirectory()){
+                String[] list = f.list();
+                for (String s : list) {
+                     String path = f.getAbsolutePath() + "/" + s;
+                     System.out.println("Processing : " + path);
+                      c.castPhotoDownload(outputFolder, path);
+                }
+            }
+        }
+*/
     }
 
 }

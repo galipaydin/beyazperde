@@ -56,6 +56,9 @@ public class PhotoFileProcessor {
 
     public static void main(String[] args) {
         PhotoFileProcessor pfp = new PhotoFileProcessor();
+//        pfp.readErrorFile("/Users/galip/dev/data/beyazperde/err1.txt");
+        
+        
         System.out.println("Usage: PhotofileProcessor errors error.txt");
         String method = "";
         String path = "";
@@ -73,5 +76,6 @@ public class PhotoFileProcessor {
 //        pfp.readErrorFile("/Users/galip/dev/data/beyazperde/error.txt");
 //        pfp.readErrorFile("/home/bulut/galip/beyazperde/error.txt");
 //        pfp.downloadPics("/Users/galip/dev/data/beyazperde/names.txt");
+
     }
 }
