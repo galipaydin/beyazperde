@@ -35,6 +35,7 @@ public class PhotoDownloader {
         try {
             p = PropertyLoader.loadProperties("bp");
             String folderPath = p.getProperty("folderPath").trim()+"/beyazperde/";
+            
             File f = new File(folderPath);
             if (!f.exists()) {
                 f.mkdirs();

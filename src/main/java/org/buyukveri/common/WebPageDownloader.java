@@ -65,6 +65,12 @@ public class WebPageDownloader {
 
     public static void main(String[] args) {
 //        WebPageDownloader.getFile("/Users/galip/NetBeansProjects/NewsDownloader/src/main/resources/commentspage.html");
-        WebPageDownloader.getPage("http://www.beyazperde.com/filmler/elestiriler-beyazperde/?page=8");
+      Document doc =  WebPageDownloader.getPage("http://akademik.yok.gov.tr/AkademikArama/AkademisyenArama?islem=OkdhI9RkTeckTt509LycGq1xYCJxIAcnK-0EEtTuRETDSh--IWGUumkwXAa42sRR");
+//        System.out.println(doc.html());
+      doc =  WebPageDownloader.getPage(
+              "http://akademik.yok.gov.tr/AkademikArama/AkademisyenGorevOgrenimBilgileri?sira=-JY7-AwtRcFwDSw_TGsXhw&amp;authorId=ACA1495427F479B6");
+        System.out.println(doc.html());
+
+        
     }
 }

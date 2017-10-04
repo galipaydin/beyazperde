@@ -9,6 +9,8 @@ import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.util.Properties;
+import java.util.Scanner;
+import jdk.nashorn.internal.parser.Lexer;
 import org.buyukveri.common.CommonTools;
 import org.buyukveri.common.PropertyLoader;
 import org.buyukveri.common.WebPageDownloader;
@@ -99,6 +101,32 @@ public class ExtractSinemalarData {
             System.out.println(ex.getMessage());
         }
 
+    }
+
+    public void parseDataFile(String path) {
+        try {
+            Scanner s = new Scanner(new File(path));
+            while (s.hasNext()) {
+                String line = s.nextLine();
+                if (line.startsWith("*")) {
+                    String[] vals = line.split(";");
+                    if (vals.length == 4) {
+                        String no = vals[1];
+                        String filmNo = vals[2];
+                        String country = vals[3];
+                    }
+                } else if (line.startsWith("&")) {
+                    String[] vals = line.split(";");
+                    if (vals.length == 4) {
+                        String no = vals[1];
+                        String filmNo = vals[2];
+                        String country = vals[3];
+                    }
+                }
+            }
+        } catch (Exception e) {
+            System.out.println(e.getMessage());
+        }
     }
 
     public static void main(String[] args) {

@@ -26,7 +26,8 @@ public class CommentsFetcher {
 
     public CommentsFetcher() {
         p = PropertyLoader.loadProperties("bp");
-        String folderPath = p.getProperty("folderPath")+"/beyazperde/";
+        String folderPath = p.getProperty("folderPath").trim()+"/beyazperde/";
+        System.out.println("folderPath = " + folderPath);
         File f = new File(folderPath);
         if (!f.exists()) {
             f.mkdirs();
